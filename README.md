@@ -22,4 +22,4 @@ A lightweight address book application that lets you add, edit, and search your 
 ## 🧩 Flowchart
 
 
-![preview](./assets/flowchart.png)
+![preview](./assets/image/flowchart.png)
