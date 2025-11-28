@@ -1,89 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Address Book</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Address Book</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 
-  <body class="p-6" style="background-color: #FFF8EE;">
-    <header class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-700">Contacts</h1>
-    </header>
+  <style>
+    .modal { display:none; }
+    .modal.active { display:flex; }
 
-    <div class="flex justify-between items-center mb-4">
-      <div class="space-x-2">
-        <button
-          class="px-3 py-1 rounded shadow"
-          style="background-color: #FFD8B5; border: 1px solid #F2C9A7;"
-        >
-          + New
+    .soft-pop { transform: scale(0.9); opacity: 0; transition: all 0.3s ease; }
+    .modal.active .soft-pop { transform: scale(1); opacity: 1; }
+
+    #loadingScreen { 
+      position: fixed; inset: 0; background: rgb(255,240,245);
+      display:flex; justify-content:center; align-items:center; z-index:9999;
+      animation: fadeOut 1s ease 2s forwards; 
+    }
+    @keyframes fadeOut { to { opacity:0; visibility:hidden; } }
+
+    .loader-heart {
+      width: 80px; height: 80px; position: relative;
+      animation: heartbeat 1s infinite;
+    }
+    .loader-heart:before, .loader-heart:after {
+      content:""; position:absolute; top:0; width:40px; height:60px;
+      background:pink; border-radius:40px 40px 0 0;
+    }
+    .loader-heart:before { left:40px; transform:rotate(-45deg); transform-origin:0 100%; }
+    .loader-heart:after { left:0; transform:rotate(45deg); transform-origin:100% 100%; }
+    @keyframes heartbeat { 
+      0% { transform:scale(0.8); } 50% { transform:scale(1); } 100% { transform:scale(0.8); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-pink-100 p-10" id="body">
+
+  <div id="loadingScreen">
+    <div class="loader-heart"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-10 border-2 border-pink-200" id="container">
+
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-4xl font-extrabold text-pink-500 tracking-wide"> Contacts 💗✨</h1>
+    </div>
+
+    <div class="flex justify-between mb-6">
+      <div class="space-x-3">
+
+        <button onclick="openModal('addModal')" class="px-5 py-2 bg-pink-300 hover:bg-pink-400 text-white rounded-2xl shadow-md">
+          ✨ Add
         </button>
 
-        <button
-          class="px-3 py-1 rounded shadow"
-          style="background-color: #FFD8B5; border: 1px solid #F2C9A7;"
-        >
-          Edit
+        <button onclick="openModal('editChoiceModal')" class="px-5 py-2 bg-yellow-300 hover:bg-yellow-400 text-gray-700 rounded-2xl shadow-md">
+          ✏️ Edit
         </button>
 
-        <button
-          class="px-3 py-1 rounded shadow"
-          style="background-color: #FFD8B5; border: 1px solid #F2C9A7;"
-        >
-          Delete
-        </button>
+        <button onclick="openModal('deleteChoiceModal')" class="px-5 py-2 bg-red-300 hover:bg-red-400 text-white rounded-2xl shadow-md">
+          🗑 Delete
+        </button> 
+
       </div>
 
       <div class="flex items-center space-x-2">
-        <input
-          type="text"
-          placeholder="Search..."
-          class="px-3 py-1 rounded shadow"
-          style="background-color: white; border: 1px solid #F2C9A7;"
-        />
-
-        <button
-          class="px-3 py-1 rounded shadow"
-          style="background-color: #FFD8B5; border: 1px solid #F2C9A7;"
-        >
-          Filter
-        </button>
+        <input id="searchInput" type="text" placeholder="Search..." 
+           class="px-4 py-2 rounded-xl border border-pink-200 shadow" 
+           onkeyup="searchContact()" 
+           />
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table
-        class="min-w-full rounded-lg shadow"
-        style="border: 1px solid #F2C9A7; background-color: white;"
-      >
-        <thead style="background-color: #FFD8B5;">
-          <tr style="border-bottom: 1px solid #F2C9A7;">
-            <th class="p-2 text-left"><input type="checkbox" /></th>
-            <th class="p-2 text-left">Name</th>
-            <th class="p-2 text-left">Phone</th>
-            <th class="p-2 text-left">Email</th>
-            <th class="p-2 text-left">Location</th>
+    <div class="overflow-hidden rounded-3xl border-2 border-pink-200 shadow-lg mb-10">
+      <table class="min-w-full bg-white text-gray-700">
+        <thead class="bg-pink-200">
+          <tr>
+            <th class="p-3">Select</th>
+            <th class="p-3">Name</th>
+            <th class="p-3">Phone</th>
+            <th class="p-3">Email</th>
+            <th class="p-3">Location</th>
+            <th class="p-3">Notes</th>
           </tr>
         </thead>
-
-        <tbody>
-          <tr>
-            <td
-              colspan="7"
-              class="p-4 text-center italic text-gray-500"
-            >
-              No contacts available
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="contactTable"></tbody>
       </table>
     </div>
 
-    <script src="assets/scripts/scripts.js"></script>
-  </body>
+    <h2 class="text-2xl font-bold text-pink-500 mb-4">Card Layout 💖</h2>
+    <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+  </div>
+
+  <div id="addModal" class="modal fixed inset-0 bg-black bg-opacity-40 justify-center items-center">
+    <div class="soft-pop bg-white p-8 rounded-3xl shadow-xl w-96 border-2 border-pink-300">
+      <h3 class="text-2xl font-bold text-pink-500 mb-4">Add Contact</h3>
+
+      <input id="addName" class="w-full p-2 mb-3 border rounded-xl" placeholder="Name" />
+      <input id="addPhone" class="w-full p-2 mb-3 border rounded-xl" placeholder="Phone" />
+      <input id="addEmail" class="w-full p-2 mb-3 border rounded-xl" placeholder="Email" />
+      <input id="addLocation" class="w-full p-2 mb-3 border rounded-xl" placeholder="Location" />
+      <textarea id="addNotes" class="w-full p-2 mb-3 border rounded-xl" placeholder="Notes..."></textarea>
+
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeModal('addModal')" class="px-4 py-1 bg-gray-300 rounded-xl">Cancel</button>
+        <button onclick="saveContact()" class="px-4 py-1 bg-pink-400 text-white rounded-xl">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editChoiceModal" class="modal fixed inset-0 bg-black bg-opacity-40 justify-center items-center">
+    <div class="soft-pop bg-white p-8 rounded-3xl shadow-xl w-80">
+
+      <h3 class="text-2xl font-bold text-yellow-500 mb-4">Choose Contact</h3>
+
+      <select id="editSelect" class="w-full p-2 border rounded-xl mb-4">
+      </select>
+
+      <button onclick="loadEdit()" class="w-full py-2 bg-yellow-400 text-white rounded-xl">Next</button>
+      <button onclick="closeModal('editChoiceModal')" class="w-full py-2 mt-2 bg-gray-300 rounded-xl">Cancel</button>
+
+    </div>
+  </div>
+
+  <div id="editModal" class="modal fixed inset-0 bg-black bg-opacity-40 justify-center items-center">
+    <div class="soft-pop bg-white p-8 rounded-3xl shadow-xl w-96 border-2 border-yellow-300">
+
+      <h3 class="text-2xl font-bold text-yellow-500 mb-4">Edit Contact</h3>
+
+      <input id="editName" class="w-full p-2 mb-3 border rounded-xl" placeholder="Name" />
+      <input id="editPhone" class="w-full p-2 mb-3 border rounded-xl" placeholder="Phone" />
+      <input id="editEmail" class="w-full p-2 mb-3 border rounded-xl" placeholder="Email" />
+      <input id="editLocation" class="w-full p-2 mb-3 border rounded-xl" placeholder="Location" />
+      <textarea id="editNotes" class="w-full p-2 mb-3 border rounded-xl" placeholder="Notes..."></textarea>
+
+      <div class="flex justify-end space-x-3">
+        <button onclick="closeModal('editModal')" class="px-4 py-1 bg-gray-300 rounded-xl">Cancel</button>
+        <button onclick="updateContact()" class="px-4 py-1 bg-yellow-400 text-white rounded-xl">Update</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="deleteChoiceModal" class="modal fixed inset-0 bg-black bg-opacity-40 justify-center items-center">
+    <div class="soft-pop bg-white p-8 rounded-3xl shadow-xl w-80">
+
+      <h3 class="text-2xl font-bold text-red-500 mb-4">Choose Contact</h3>
+
+      <select id="deleteSelect" class="w-full p-2 border rounded-xl mb-4"></select>
+
+      <button onclick="confirmDelete()" class="w-full py-2 bg-red-400 text-white rounded-xl">Next</button>
+      <button onclick="closeModal('deleteChoiceModal')" class="w-full py-2 mt-2 bg-gray-300 rounded-xl">Cancel</button>
+
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal fixed inset-0 bg-black bg-opacity-40 justify-center items-center">
+    <div class="soft-pop bg-white p-8 rounded-3xl shadow-xl w-80 text-center">
+
+      <h3 class="text-2xl font-bold text-red-500 mb-4">Delete Contact?</h3>
+      <p class="mb-6">Are you sure?</p>
+
+      <button onclick="closeModal('deleteModal')" class="px-4 py-1 bg-gray-300 rounded-xl">Cancel</button>
+      <button onclick="deleteContact()" class="px-4 py-1 bg-red-400 text-white rounded-xl">Delete</button>
+
+    </div>
+  </div>
+
+  <script>
+    
+    function openModal(id){ document.getElementById(id).classList.add("active"); }
+    function closeModal(id){ document.getElementById(id).classList.remove("active"); }
+
+    let contacts = JSON.parse(localStorage.getItem("contacts")) || [];
+    let editId = null;
+    let deleteId = null;
+
+    function saveLocal() {
+      localStorage.setItem("contacts", JSON.stringify(contacts));
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("contactTable");
+      tbody.innerHTML = "";
+
+      if (contacts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-pink-400 italic">No contacts yet 💕</td></tr>`;
+        return;
+      }
+
+      contacts.forEach(c => {
+        tbody.innerHTML += `
+          <tr class="text-center border-b">
+            <td><input type="radio" name="selected" onclick="selectRow(${c.id})"></td>
+            <td>${c.fullname}</td>
+            <td>${c.phone}</td>
+            <td>${c.email}</td>
+            <td>${c.location}</td>
+            <td>${c.notes || "-"}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderCards() {
+      const card = document.getElementById("cardGrid");
+      card.innerHTML = "";
+
+      contacts.forEach(c => {
+        card.innerHTML += `
+        <div class="bg-pink-50 border-2 border-pink-200 rounded-3xl p-6 shadow text-center">
+          <div class="w-20 h-20 bg-pink-200 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-lg text-pink-600">🌸 ${c.fullname}</h3>
+          <p class="text-sm text-gray-600">📞 ${c.phone}</p>
+          <p class="text-sm text-gray-600">✉ ${c.email}</p>
+          <p class="text-sm text-gray-600">📍 ${c.location}</p>
+        </div>`;
+      });
+    }
+
+    function saveContact() {
+      let c = {
+        id: Date.now(),
+        fullname: addName.value,
+        phone: addPhone.value,
+        email: addEmail.value,
+        location: addLocation.value,
+        notes: addNotes.value
+      };
+
+      contacts.push(c);
+      saveLocal();
+
+      renderTable();
+      renderCards();
+
+      closeModal('addModal');
+      addName.value = addPhone.value = addEmail.value = addLocation.value = addNotes.value = "";
+    }
+
+    function loadEdit() {
+      editId = parseInt(document.getElementById("editSelect").value);
+      let c = contacts.find(x => x.id === editId);
+
+      editName.value = c.fullname;
+      editPhone.value = c.phone;
+      editEmail.value = c.email;
+      editLocation.value = c.location;
+      editNotes.value = c.notes;
+
+      closeModal("editChoiceModal");
+      openModal("editModal");
+    }
+
+    function updateContact() {
+      let c = contacts.find(x => x.id === editId);
+
+      c.fullname = editName.value;
+      c.phone = editPhone.value;
+      c.email = editEmail.value;
+      c.location = editLocation.value;
+      c.notes = editNotes.value;
+
+      saveLocal();
+
+      renderTable();
+      renderCards();
+      closeModal("editModal");
+    }
+
+    function confirmDelete() {
+      deleteId = parseInt(document.getElementById("deleteSelect").value);
+      closeModal("deleteChoiceModal");
+      openModal("deleteModal");
+    }
+
+    function deleteContact() {
+      contacts = contacts.filter(c => c.id !== deleteId);
+      saveLocal();
+      renderTable();
+      renderCards();
+      closeModal("deleteModal");
+    }
+
+    function searchContact() {
+      const q = searchInput.value.toLowerCase();
+
+      const tbody = document.getElementById("contactTable");
+      tbody.innerHTML = "";
+
+      contacts
+        .filter(c => c.fullname.toLowerCase().includes(q))
+        .forEach(c => {
+          tbody.innerHTML += `
+            <tr class="text-center border-b">
+              <td><input type="radio"></td>
+              <td>${c.fullname}</td>
+              <td>${c.phone}</td>
+              <td>${c.email}</td>
+              <td>${c.location}</td>
+              <td>${c.notes}</td>
+            </tr>`;
+        });
+
+      if (tbody.innerHTML === "") {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-pink-400">No match 🌸</td></tr>`;
+      }
+    }
+
+    function initDropdowns() {
+      let e = document.getElementById("editSelect");
+      let d = document.getElementById("deleteSelect");
+
+      e.innerHTML = "";
+      d.innerHTML = "";
+
+      contacts.forEach(c => {
+        e.innerHTML += `<option value="${c.id}">${c.fullname}</option>`;
+        d.innerHTML += `<option value="${c.id}">${c.fullname}</option>`;
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTable();
+      renderCards();
+      initDropdowns();
+    });
+
+  </script>
+</body>
 </html>
