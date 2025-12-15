@@ -1,176 +1,179 @@
-let contacts = JSON.parse(localStorage.getItem("contacts")) || [
-  {
-    id: 1,
-    fullname: "Maulidia Nur Sahilah",
-    phone: "6285890384386",
-    email: "maulidia.nur.sahilah0410@gmail.com",
-    location: "Jakarta",
-    notes: "My Self 💗"
-  },
-  {
-    id: 2,
-    fullname: "Reza Pradana",
-    phone: "62",
-    email: "rezapradana@gmail.com",
-    location: "Jakarta",
-    notes: "family ✨"
-  },
-];
+function openModal(id){ document.getElementById(id).classList.add("active"); }
+    function closeModal(id){ document.getElementById(id).classList.remove("active"); }
 
-function saveToLocal() {
-  localStorage.setItem("contacts", JSON.stringify(contacts));
-}
+    let contacts = JSON.parse(localStorage.getItem("contacts")) || [
+      {
+        id: 1,
+        fullname: "Maulidia Nur Sahilah",
+        phone: "085890384386",
+        email: "maulidia.nur.sahilah0410@gmail.com",
+        location: "Jakarta",
+        notes: "me🌸",
+      },
+      {
+        id: 2,
+        fullname: "Reza Pradana",
+        phone: "085894578640",
+        email: "rezapradana07@gmail.com",
+        location: "Jakarta",
+        notes: "family✨",
+      }
+    ];
 
-const $ = (id) => document.getElementById(id);
+    let editId = null;
+    let deleteId = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  
-  const tableBody = $("contactTable");  
-  const cardGrid = $("cardGrid");      
-
-  let editId = null;
-  let deleteId = null;
-
-  function renderContacts() {
-    tableBody.innerHTML = "";
-    cardGrid.innerHTML = "";
-
-    if (contacts.length === 0) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="p-6 text-center italic text-pink-400">
-            No contacts yet — add something cute! 💕
-          </td>
-        </tr>
-      `;
+    function saveLocal() {
+      localStorage.setItem("contacts", JSON.stringify(contacts));
     }
 
-    contacts.forEach((c) => {
-      tableBody.innerHTML += `
-        <tr class="fade">
-          <td class="p-3 text-center"><input type="checkbox"></td>
-          <td class="p-3">${c.fullname}</td>
-          <td class="p-3">${c.phone}</td>
-          <td class="p-3">${c.email}</td>
-          <td class="p-3">${c.location}</td>
-          <td class="p-3">${c.notes || "-"}</td>
-        </tr>
-      `;
+    function renderTable() {
+      const tbody = document.getElementById("contactTable");
+      tbody.innerHTML = "";
 
-      cardGrid.innerHTML += `
-        <div class="bg-pink-50 border-2 border-pink-200 rounded-3xl p-6 shadow text-center fade soft-pop relative">
-          <h3 class="font-bold text-lg text-pink-600">${c.fullname}</h3>
-          <p class="text-sm text-gray-600">${c.phone}</p>
-          <p class="text-sm text-gray-600">${c.email}</p>
-          <p class="text-sm text-gray-600">${c.location}</p>
-          <p class="text-xs text-gray-500 italic">${c.notes || ""}</p>
+      if (contacts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center p-6 text-pink-400 italic">No contacts yet 💕</td></tr>`;
+        return;
+      }
 
-          <div class="flex justify-center space-x-3 mt-4">
-            <button class="px-4 py-1 bg-yellow-300 rounded-xl btnEdit" data-id="${c.id}">✏️</button>
-            <button class="px-4 py-1 bg-red-300 text-white rounded-xl btnDelete" data-id="${c.id}">🗑️</button>
-          </div>
-        </div>
-      `;
-    });
+      contacts.forEach(c => {
+        tbody.innerHTML += `
+          <tr class="text-center border-b">
+            <td>${c.id}</td>
+            <td>${c.fullname}</td>
+            <td>${c.phone}</td>
+            <td>${c.email}</td>
+            <td>${c.location}</td>
+            <td>${c.notes || "-"}</td>
+          </tr>
+        `;
+      });
+    }
 
-    attachEvents();
-  }
+    function renderCards() {
+      const card = document.getElementById("cardGrid");
+      card.innerHTML = "";
 
-  renderContacts();
+      contacts.forEach(c => {
+        card.innerHTML += `
+        <div class="bg-pink-50 border-2 border-pink-200 rounded-3xl p-6 shadow text-center">
+          <div class="w-20 h-20 bg-pink-200 rounded-full mx-auto mb-3"></div>
+          <h3 class="font-bold text-lg text-pink-600">🌸 ${c.fullname}</h3>
+          <p class="text-sm text-gray-600">📞 ${c.phone}</p>
+          <p class="text-sm text-gray-600">✉ ${c.email}</p>
+          <p class="text-sm text-gray-600">📍 ${c.location}</p>
+        </div>`;
+      });
+    }
 
-  function openModal(id) {
-    $(id).classList.add("active");
-  }
+    function saveContact() {
+      let newId = contacts.length > 0
+      ? contacts[contacts.length - 1].id + 1
+      : 1;
 
-  function closeModal(id) {
-    $(id).classList.remove("active");
-  }
-
-  $("btnAdd").onclick = () => openModal("addModal");
-
-  $("saveAdd").onclick = () => {
-    const name = $("addName").value.trim();
-    const phone = $("addPhone").value.trim();
-    const email = $("addEmail").value.trim();
-    const location = $("addLocation").value.trim();
-    const notes = $("addNotes").value.trim();
-
-    if (!name) return alert("Name cannot be empty!");
-
-    contacts.push({
-      id: Date.now(),
-      fullname: name,
-      phone,
-      email,
-      location,
-      notes,
-    });
-
-    saveToLocal();
-    renderContacts();
-    closeModal("addModal");
-
-    $("addName").value =
-      $("addPhone").value =
-      $("addEmail").value =
-      $("addLocation").value =
-      $("addNotes").value =
-        "";
-  };
-
-  function attachEvents() {
-    document.querySelectorAll(".btnEdit").forEach((btn) => {
-      btn.onclick = (e) => {
-        editId = Number(btn.dataset.id);
-
-        const c = contacts.find((x) => x.id === editId);
-
-        $("editName").value = c.fullname;
-        $("editPhone").value = c.phone;
-        $("editEmail").value = c.email;
-        $("editLocation").value = c.location;
-        $("editNotes").value = c.notes;
-
-        openModal("editModal");
+      let c = {
+        id: newId,
+        fullname: addName.value,
+        phone: addPhone.value,
+        email: addEmail.value,
+        location: addLocation.value,
+        notes: addNotes.value
       };
+
+      contacts.push(c);
+      saveLocal();
+
+      renderTable();
+      renderCards();
+
+      closeModal('addModal');
+      addName.value = addPhone.value = addEmail.value = addLocation.value = addNotes.value = "";
+    }
+
+    function loadEdit() {
+      editId = parseInt(document.getElementById("editSelect").value);
+      let c = contacts.find(x => x.id === editId);
+
+      editName.value = c.fullname;
+      editPhone.value = c.phone;
+      editEmail.value = c.email;
+      editLocation.value = c.location;
+      editNotes.value = c.notes;
+
+      closeModal("editChoiceModal");
+      openModal("editModal");
+    }
+
+    function updateContact() {
+      let c = contacts.find(x => x.id === editId);
+
+      c.fullname = editName.value;
+      c.phone = editPhone.value;
+      c.email = editEmail.value;
+      c.location = editLocation.value;
+      c.notes = editNotes.value;
+
+      saveLocal();
+
+      renderTable();
+      renderCards();
+      closeModal("editModal");
+    }
+
+    function confirmDelete() {
+      deleteId = parseInt(document.getElementById("deleteSelect").value);
+      closeModal("deleteChoiceModal");
+      openModal("deleteModal");
+    }
+
+    function deleteContact() {
+      contacts = contacts.filter(c => c.id !== deleteId);
+      saveLocal();
+      renderTable();
+      renderCards();
+      closeModal("deleteModal");
+    }
+
+    function searchContact() {
+      const q = searchInput.value.toLowerCase();
+
+      const tbody = document.getElementById("contactTable");
+      tbody.innerHTML = "";
+
+      contacts
+        .filter(c => c.fullname.toLowerCase().includes(q))
+        .forEach(c => {
+          tbody.innerHTML += `
+           <tr class="text-center border-b">
+              <td>${c.id}</td>
+              <td>${c.fullname}</td>
+              <td>${c.phone}</td>
+              <td>${c.email}</td>
+              <td>${c.location}</td>
+              <td>${c.notes}</td>
+            </tr>`;
+        });
+
+      if (tbody.innerHTML === "") {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-pink-400">No match 🌸</td></tr>`;
+      }
+    }
+
+    function initDropdowns() {
+      let e = document.getElementById("editSelect");
+      let d = document.getElementById("deleteSelect");
+
+      e.innerHTML = "";
+      d.innerHTML = "";
+
+      contacts.forEach(c => {
+        e.innerHTML += `<option value="${c.id}">${c.fullname}</option>`;
+        d.innerHTML += `<option value="${c.id}">${c.fullname}</option>`;
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTable();
+      renderCards();
+      initDropdowns();
     });
-
-    document.querySelectorAll(".btnDelete").forEach((btn) => {
-      btn.onclick = (e) => {
-        deleteId = Number(btn.dataset.id);
-        openModal("deleteModal");
-      };
-    });
-  }
-
-  $("saveEdit").onclick = () => {
-    const c = contacts.find((x) => x.id === editId);
-
-    c.fullname = $("editName").value;
-    c.phone = $("editPhone").value;
-    c.email = $("editEmail").value;
-    c.location = $("editLocation").value;
-    c.notes = $("editNotes").value;
-
-    saveToLocal();
-    renderContacts();
-    closeModal("editModal");
-  };
-
-  $("confirmDelete").onclick = () => {
-    contacts = contacts.filter((c) => c.id !== deleteId);
-    saveToLocal();
-    renderContacts();
-    closeModal("deleteModal");
-  };
-
-  $("searchInput").addEventListener("input", () => {
-    const keyword = $("searchInput").value.toLowerCase();
-
-    document.querySelectorAll("#cardGrid > div").forEach((card) => {
-      const name = card.querySelector("h3").textContent.toLowerCase();
-      card.style.display = name.includes(keyword) ? "block" : "none";
-    });
-  });
-
-});  
